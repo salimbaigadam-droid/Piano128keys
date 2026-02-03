@@ -451,4 +451,4 @@ docker-compose logs python_backend
 
 ---
 
-Built with ❤️ using Python, C++, Rust, PostgreSQL, and React
+Built with using Python, C++, Rust, PostgreSQL, and React by Salimabai
