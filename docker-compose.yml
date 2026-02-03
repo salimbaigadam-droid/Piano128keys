@@ -1,0 +1,114 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database - Persistent Storage
+  postgres:
+    image: postgres:16-alpine
+    container_name: piano_postgres
+    environment:
+      POSTGRES_DB: piano_db
+      POSTGRES_USER: piano_user
+      POSTGRES_PASSWORD: secure_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database_schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U piano_user -d piano_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - piano_network
+
+  # Python Backend - ML/Analytics Pipeline
+  python_backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.python
+    container_name: piano_python
+    ports:
+      - "8001:8001"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=piano_db
+      - DB_USER=piano_user
+      - DB_PASSWORD=secure_password
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./python_backend.py:/app/python_backend.py
+    restart: unless-stopped
+    networks:
+      - piano_network
+
+  # C++ Backend - Real-time DSP
+  cpp_backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.cpp
+    container_name: piano_cpp
+    ports:
+      - "8002:8002"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=piano_db
+      - DB_USER=piano_user
+      - DB_PASSWORD=secure_password
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - piano_network
+
+  # Rust Backend - Concurrent Actor
+  rust_backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.rust
+    container_name: piano_rust
+    ports:
+      - "8003:8003"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=piano_db
+      - DB_USER=piano_user
+      - DB_PASSWORD=secure_password
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - piano_network
+
+  # Frontend (optional - for serving the React app)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: piano_frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - python_backend
+      - cpp_backend
+      - rust_backend
+    networks:
+      - piano_network
+
+networks:
+  piano_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+    # This volume persists data even when containers are stopped or removed
+    # To completely reset the database, use: docker-compose down -v

@@ -1,0 +1,42 @@
+[package]
+name = "piano-rust-backend"
+version = "1.0.0"
+edition = "2021"
+authors = ["Piano Team"]
+
+[dependencies]
+# Web Framework (Actor-based)
+actix-web = "4.4"
+actix = "0.13"
+actix-rt = "2.9"
+
+# Async Runtime
+tokio = { version = "1.35", features = ["full"] }
+futures = "0.3"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Database
+tokio-postgres = "0.7"
+deadpool-postgres = "0.12"
+
+# Logging
+env_logger = "0.11"
+log = "0.4"
+
+# Utilities
+chrono = "0.4"
+uuid = { version = "1.6", features = ["v4", "serde"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+
+# Build instructions:
+# 1. Install Rust: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+# 2. Build: cargo build --release
+# 3. Run: cargo run --release
+# 4. Binary location: target/release/piano-rust-backend
